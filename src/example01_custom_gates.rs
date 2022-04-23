@@ -84,7 +84,23 @@ mod tests {
     #[test]
     fn test_successful_case() {
         let circuit = MyCircuit::<Fp> { a: Some(Fp::one()) };
-        let prover = MockProver::<Fp>::run(3, &circuit, vec![]).unwrap();
+        let k = 3;
+        let prover = MockProver::<Fp>::run(k, &circuit, vec![]).unwrap();
         assert_eq!(prover.verify(), Ok(()));
+
+        #[cfg(feature = "dev-graph")]
+        {
+            use plotters::prelude::*;
+            let root = BitMapBackend::new("example01.png", (1024, 768)).into_drawing_area();
+            root.fill(&WHITE).unwrap();
+            let root = root.titled("a is one", ("sans-serif", 60)).unwrap();
+
+            halo2_proofs::dev::CircuitLayout::default()
+                .view_width(0..2)
+                .view_height(0..16)
+                .show_labels(false)
+                .render(k, &circuit, &root)
+                .unwrap();
+        }
     }
 }
