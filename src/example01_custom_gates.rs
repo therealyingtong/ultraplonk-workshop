@@ -98,7 +98,7 @@ mod tests {
             halo2_proofs::dev::CircuitLayout::default()
                 .view_width(0..2)
                 .view_height(0..16)
-                .show_labels(false)
+                .show_labels(true)
                 .render(k, &circuit, &root)
                 .unwrap();
         }
