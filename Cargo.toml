@@ -6,5 +6,4 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-halo2_proofs = { git = "https://github.com/appliedzkp/halo2.git", tag = "v2022_03_06" }
-pairing = { git = 'https://github.com/appliedzkp/pairing', package = "pairing_bn256" }
+halo2_proofs = { git = "https://github.com/zcash/halo2", commit = "66827f3df932b34290c0934c6273051997e2feca" }
