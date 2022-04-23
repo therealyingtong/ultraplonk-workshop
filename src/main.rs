@@ -82,8 +82,7 @@ impl<F: FieldExt> Circuit<F> for MyCircuit<F> {
 #[cfg(test)]
 mod tests {
     use crate::*;
-    use halo2_proofs::dev::MockProver;
-    use pairing::bn256::Fr as Fp;
+    use halo2_proofs::{dev::MockProver, pasta::Fp};
 
     #[test]
     fn test_successful_case() {
