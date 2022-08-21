@@ -10,6 +10,6 @@ dev-graph = ["halo2_proofs/dev-graph", "plotters"]
 
 
 [dependencies]
-halo2_proofs = { git = "https://github.com/zcash/halo2", commit = "66827f3df932b34290c0934c6273051997e2feca" }
-halo2_gadgets = { git = "https://github.com/zcash/halo2", commit = "66827f3df932b34290c0934c6273051997e2feca" }
+halo2_proofs = { git = "https://github.com/zcash/halo2", rev = "5cd5e140f4631556d2fc666b210058b74179e635" }
+halo2_gadgets = { git = "https://github.com/zcash/halo2", rev = "5cd5e140f4631556d2fc666b210058b74179e635" }
 plotters = { version = "0.3.0", optional = true }

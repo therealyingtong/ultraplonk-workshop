@@ -1,6 +1,6 @@
 use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::{
-    circuit::{Layouter, Region, SimpleFloorPlanner},
+    circuit::{Layouter, Region, SimpleFloorPlanner, Value},
     plonk::{Advice, Circuit, Column, ConstraintSystem, Error, Expression, Selector},
     poly::Rotation,
 };
@@ -32,17 +32,17 @@ impl<F: FieldExt> EqOneConfig<F> {
         &self,
         region: &mut Region<'_, F>,
         offset: usize,
-        dummy: Option<F>,
+        dummy: Value<F>,
     ) -> Result<(), Error> {
         self.q_enable.enable(region, offset)?;
-        region.assign_advice(|| "a", self.a, offset, || dummy.ok_or(Error::Synthesis))?;
+        region.assign_advice(|| "a", self.a, offset, || dummy)?;
         Ok(())
     }
 }
 
 #[derive(Default)]
 struct MyCircuit<F> {
-    a: Option<F>,
+    a: Value<F>,
 }
 
 impl<F: FieldExt> Circuit<F> for MyCircuit<F> {
@@ -83,7 +83,7 @@ mod tests {
 
     #[test]
     fn test_successful_case() {
-        let circuit = MyCircuit::<Fp> { a: Some(Fp::one()) };
+        let circuit = MyCircuit::<Fp> { a: Value::known(Fp::one()) };
         let k = 3;
         let prover = MockProver::<Fp>::run(k, &circuit, vec![]).unwrap();
         assert_eq!(prover.verify(), Ok(()));
@@ -91,7 +91,7 @@ mod tests {
         #[cfg(feature = "dev-graph")]
         {
             use plotters::prelude::*;
-            let root = BitMapBackend::new("example01.png", (1024, 768)).into_drawing_area();
+            let root = BitMapBackend::new("example01.png", (500, 500)).into_drawing_area();
             root.fill(&WHITE).unwrap();
             let root = root.titled("a is one", ("sans-serif", 60)).unwrap();
 

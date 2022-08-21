@@ -1,7 +1,7 @@
-use halo2_gadgets::primitives::poseidon::{Hash, P128Pow5T3};
+use halo2_gadgets::poseidon::primitives::{Hash, P128Pow5T3};
 use halo2_proofs::pasta::Fp;
 use halo2_proofs::{
-    circuit::{Layouter, Region, SimpleFloorPlanner},
+    circuit::{Layouter, Region, SimpleFloorPlanner, Value},
     plonk::{Advice, Circuit, Column, ConstraintSystem, Error, Expression, Selector, TableColumn},
     poly::Rotation,
 };
@@ -58,22 +58,17 @@ impl PoseidonConfig {
         &self,
         region: &mut Region<'_, Fp>,
         offset: usize,
-        a: Option<Fp>,
+        a: Value<Fp>,
     ) -> Result<(), Error> {
         self.q_enable.enable(region, offset)?;
-        region.assign_advice(|| "a", self.a, offset, || a.ok_or(Error::Synthesis))?;
+        region.assign_advice(|| "a", self.a, offset, || a)?;
 
         let poseidon = a.map(|a| {
             let hasher = Hash::<_, P128Pow5T3, _, 3, 2>::init();
             hasher.hash([a])
         });
 
-        region.assign_advice(
-            || "poseidon",
-            self.poseidon,
-            offset,
-            || poseidon.ok_or(Error::Synthesis),
-        )?;
+        region.assign_advice(|| "poseidon", self.poseidon, offset, || poseidon)?;
 
         Ok(())
     }
@@ -90,13 +85,13 @@ impl PoseidonTableConfig {
         layouter.assign_table(
             || "Poseidon table",
             |mut table| {
-                let mut index = 0;
-                for a in 0..(1 << 4) {
-                    table.assign_cell(|| "a", self.a, index, || Ok(Fp::from(a as u64)))?;
+                for (offset, a) in (0..(1 << 4)).enumerate() {
+                    let a = Value::known(Fp::from(a as u64));
+                    table.assign_cell(|| "a", self.a, offset, || a)?;
+
                     let hasher = Hash::<_, P128Pow5T3, _, 3, 2>::init();
-                    let hash = hasher.hash([Fp::from(a as u64)]);
-                    table.assign_cell(|| "Poseidon", self.poseidon, index, || Ok(hash))?;
-                    index += 1;
+                    let hash = a.map(|a| hasher.hash([a]));
+                    table.assign_cell(|| "Poseidon", self.poseidon, offset, || hash)?;
                 }
 
                 Ok(())
@@ -107,7 +102,7 @@ impl PoseidonTableConfig {
 
 #[derive(Default)]
 struct MyCircuit {
-    a: Option<Fp>,
+    a: Value<Fp>,
 }
 
 impl Circuit<Fp> for MyCircuit {
@@ -147,7 +142,9 @@ mod tests {
 
     #[test]
     fn test_successful_case() {
-        let circuit = MyCircuit { a: Some(Fp::one()) };
+        let circuit = MyCircuit {
+            a: Value::known(Fp::one()),
+        };
         let k = 5;
         let prover = MockProver::<Fp>::run(k, &circuit, vec![]).unwrap();
         prover.assert_satisfied();
@@ -156,7 +153,7 @@ mod tests {
         #[cfg(feature = "dev-graph")]
         {
             use plotters::prelude::*;
-            let root = BitMapBackend::new("example02.png", (1024, 768)).into_drawing_area();
+            let root = BitMapBackend::new("example02.png", (500, 800)).into_drawing_area();
             root.fill(&WHITE).unwrap();
             let root = root.titled("Poseidon lookup", ("sans-serif", 60)).unwrap();
 
